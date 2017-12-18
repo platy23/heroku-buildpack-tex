@@ -5,9 +5,8 @@ BUILD_DIR=$1
 CACHE_DIR=$2
 BIN_DIR=$(cd $(dirname $0); pwd) # absolute path
 
-TEXLIVE_DOMAIN="https://heroku-buildpack-tex.s3.amazonaws.com"
-VERSION=`curl $TEXLIVE_DOMAIN/VERSION -s`
-TEXLIVE_URL="$TEXLIVE_DOMAIN/texlive-$VERSION.tar.gz"
+VERSION=`2017`
+TEXLIVE_URL="https://github.com/ThibaultLatrille/texlive/blob/master/texlive.tar.gz"
 TEXLIVE_HOME=$BUILD_DIR/.texlive
 TEXLIVE_CACHE=$CACHE_DIR/.texlive
 PATH=$TEXLIVE_HOME/bin/x86_64-linux:$PATH
