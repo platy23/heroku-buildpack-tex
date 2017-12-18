@@ -1,56 +1,10 @@
 #!/usr/bin/env bash
-# bin/compile <build-dir> <cache-dir>
-
-BUILD_DIR=$1
-CACHE_DIR=$2
-BIN_DIR=$(cd $(dirname $0); pwd) # absolute path
-
-VERSION=`2017`
-TEXLIVE_URL="https://github.com/ThibaultLatrille/texlive/blob/master/texlive.tar.gz"
-TEXLIVE_HOME=$BUILD_DIR/.texlive
-TEXLIVE_CACHE=$CACHE_DIR/.texlive
-PATH=$TEXLIVE_HOME/bin/x86_64-linux:$PATH
-PROFILE_D=$BUILD_DIR/.profile.d/texlive.sh
-
-# Output helpers
-source $BIN_DIR/utils
-
-# Prepare the various paths
-mkdir -p $TEXLIVE_HOME
-mkdir -p $TEXLIVE_CACHE
-mkdir -p `dirname $PROFILE_D`
-
-if [ -f $TEXLIVE_CACHE/VERSION ] && (( $VERSION == `cat $TEXLIVE_CACHE/VERSION` )); then
-    # Get TeX Live from the cache if possible
-    build-step "Installing TeX Live $VERSION from cache"
-    cp -R $TEXLIVE_CACHE/* $TEXLIVE_HOME
-else
-    # Get TeX Live from S3 if necessary
-    if [ -f "$TEXLIVE_CACHE/VERSION" ]; then
-        build-step "Upgrading to TeX Live $VERSION"
-    else
-        build-step "Fetching TeX Live $VERSION"
-    fi
-
-    curl $TEXLIVE_URL -s -o - | tar xzf - -C $TEXLIVE_HOME
-
-    # Make sure the cache is empty
-    rm -rf $TEXLIVE_CACHE/*
-
-    # Store a copy of it in the cache so it doesn't have to be fetched again
-    cp -R $TEXLIVE_HOME/* $TEXLIVE_CACHE
-
-    # Store the version for later
-    echo $VERSION > $TEXLIVE_CACHE/VERSION
-fi
-
-# Check for an essential binary to make sure it's installed
-if [ ! `which pdflatex` ]; then
-    build-warn "TeX Live installation failed"
-    exit 1
-fi
-
-tlmgr install ec
-
-# Set up the environment for runtimes now that compilation has finished
-echo 'export PATH=$HOME/.texlive/bin/x86_64-linux:$PATH' >> $PROFILE_D
+echo "-----> Installing texlive 2017"
+# change to the the BUILD_DIR ($1)
+cd $1
+# download the binary (-O) silently (-s)
+curl https://github.com/ThibaultLatrille/texlive/blob/master/texlive.tar.gz -s -O -ssl3
+# make a directory to untar (like unzip) the binary
+mkdir -p vendor/texlive
+# untar the binary to the directory we want
+tar -C vendor/texlive -xvf texlive.tar.gz
