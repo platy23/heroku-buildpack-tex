@@ -51,5 +51,7 @@ if [ ! `which pdflatex` ]; then
     exit 1
 fi
 
+tlmgr install ec
+
 # Set up the environment for runtimes now that compilation has finished
 echo 'export PATH=$HOME/.texlive/bin/x86_64-linux:$PATH' >> $PROFILE_D
