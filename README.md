@@ -8,14 +8,13 @@ TeX Live environment into your Heroku app and doesn't do anything else with it.
 
     $ ls
 
-    $ heroku create --buildpack git://github.com/holiture/heroku-buildpack-tex.git
+    $ heroku create --buildpack git://github.com/ThibaultLatrille/heroku-buildpack-tex.git
 
     $ git push heroku master
     ...
     -----> Heroku receiving push
     -----> Fetching custom build pack... done
     -----> TeX app detected
-    -----> Fetching TeX Live 20120511
     ...
 
 This can be useful if you simply want to play around with TeX Live without
@@ -28,48 +27,65 @@ Multipacks
 ----------
 
 More likely, you'll want to use it as part of a larger project, which needs to
-build PDFs. The easiest way to do this is with a [multipack](https://github.com/ddollar/heroku-buildpack-multi),
-where this is just one of the buildpacks you'll be working with.
+build PDFs. The easiest way to do this is with a mutlipack.
 
-    $ cat .buildpacks
-    git://github.com/heroku/heroku-buildpack-python.git
-    git://github.com/holiture/heroku-buildpack-tex.git
-
-    $ heroku config:add BUILDPACK_URL=git://github.com/ddollar/heroku-buildpack-multi.git
+    $ heroku buildpacks:add git://github.com/ThibaultLatrille/heroku-buildpack-tex.git
 
 This will bundle TeX Live into your instance without impacting your existing
 system. You can then call out to executables like `pdflatex` as you would on
 any other machine.
 
-Auto-build
+Build the TexLive binary
 ----------
 
-Another potential use is simply for building a specific document. This can be
-useful if you're working with a document pipeline that outputs LaTeX documents,
-but not often enough to need it integrated into a larger system. Rather than
-having to build and install TeX Live yourself, you can use this buildpack to
-do it for you.
+Create a new heroku app and connect to it
 
-This funcionality is provided by a special `autobuild` branch. To activate it,
-simply append `#autobuild` to the buildpack URL and make sure you have a
-`document.tex` at the root of your repository. It can reference other .tex files
-as necessary, as long as the main file is called `document.tex`.
+    $ heroku create buildpack-tex
+    $ heroku run bash --app buildpack-tex
 
-    $ ls
-    document.tex
+Download and extract TexLive
 
-    $ heroku create --buildpack git://github.com/holiture/heroku-buildpack-tex.git#autobuild
+    $ wget http://mirror.ctan.org/systems/texlive/tlnet/install-tl-unx.tar.gz -O install-tl-unx.tar.gz
+    $ tar -xvzf install-tl-unx.tar.gz
 
-    $ git push heroku master
-    ...
-    -----> Heroku receiving push
-    -----> Fetching custom build pack... done
-    -----> TeX app detected
-    -----> Fetching TeX Live 20120511
-    -----> Building document.tex
-           Wrote 3 pages to document.pdf
+TexLive install 
 
-This will output a PDF file, which you can download it using your browser as
-`document.pdf` at the root of your app's URL. For example, if your document app
-is called `silent-night-1234`, you'd be able to find your completed document at
-`http://silent-night-1234.herokuapp.com/document.pdf`.
+    $ cd /app/install-tl-20171218
+    $ perl ./install-tl
+    
+changes: 
+TEXDIR /app/texlive
+set installation scheme: scheme-basic
+NO install macro/font doc tree
+NO install macro/font source tree
+
+Set PATH
+
+    $ export PATH=/app/texlive/bin/x86_64-linux:$PATH
+
+Install recommended packages
+
+    $ tlmgr install ec lm eurosym babel-greek babel-french
+
+test if compilation works
+
+    $ wget https://controversciences.org/timelines_download_tex?timeline_id=159 -O input.tex
+    $ pdflatex input.tex
+    $ rm -rf ./input.*
+
+Create binary archive
+
+    $ cd /app/texlive
+    $ tar czf /app/texlive.tar.gz -C /app/texlive .
+
+Upload archive
+
+    $ cd /app
+    $ git init
+    $ git add texlive.tar.gz
+    $ git config --global user.name "Thibault Latrille"
+    $ git config --global user.email "myemail@gmail.com"
+    $ git commit -m "TexLive compressed"
+    $ git push --set-upstream https://github.com/ThibaultLatrille/texlive.git master --force 
+   
+Don't forget to update your PATH var in heroku such that it includes /app/texlive/bin/x86_64-linux:
