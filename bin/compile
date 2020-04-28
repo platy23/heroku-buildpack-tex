@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-echo "-----> Installing texlive 2017"
+echo "-----> Installing texlive 2020"
 # change to the the BUILD_DIR ($1)
 cd $1
 # download the binary (-O) silently (-s)
